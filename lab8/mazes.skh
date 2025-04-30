@@ -1,0 +1,36 @@
+/* Maze 01 */
+At SZ = new At(x=3,y=3);               //  +-----------+
+                                       //  |     X     |
+int[4][3] WALLS = { { 1, 1, 2, 1 },    //  |   +---+   +
+                    { 1, 0, 1, 1 },    //  |       |     >>
+                    { 1, 1, 1, 2 } };  //  |   +---+   +
+                                       //  |     O     |
+At THESEUS  = new At(x=1,y=2);         //  +-----------+
+At MINOTAUR = new At(x=1,y=0);
+At EXIT     = new At(x=2,y=1);
+
+
+/* Maze 02 */
+At SZ = new At(x=3, y=4);
+
+int[4][3] WALLS = { { 0, 2, 0, 3 },
+                    { 0, 2, 1, 2 },
+                    { 1, 0, 1, 1 } };
+
+At THESEUS  = new At(x=1,y=1);
+At MINOTAUR = new At(x=1,y=0);
+At EXIT     = new At(x=2,y=1);
+
+/* Maze 03 */                 /* Hint: increase the unroll bound! */
+At SZ = new At(x=7,y=4);               /*  (`--bnd-unroll-amnt`)  */
+
+int[4][6] WALLS = { { 0, 1, 1, 1 },
+                    { 1, 1, 2, 1 },
+                    { 1, 1, 1, 2 },
+                    { 4, 2, 5, 2 },
+                    { 5, 2, 6, 2 },
+                    { 5, 2, 5, 3 } };
+
+At THESEUS  = new At(x=2,y=1);
+At MINOTAUR = new At(x=0,y=1);
+At EXIT     = new At(x=1,y=3);

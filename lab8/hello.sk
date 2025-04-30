@@ -1,0 +1,6 @@
+/* From the Sketch manual, section 1.1 */
+
+harness void doubleSketch(int x) {
+  int t = x * ??;
+  assert t == x + x;
+}

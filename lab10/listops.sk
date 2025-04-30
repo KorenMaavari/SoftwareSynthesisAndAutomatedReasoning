@@ -1,0 +1,82 @@
+package listops;
+
+
+struct Node {
+    int val;
+    Node next;
+}
+
+/**
+ * Helper function to build lists from arrays.
+ */
+Node mklist(int n, int[n] elems) {
+    Node h = null, t = null;
+    for (int i = 0; i < n; i++) {
+        Node nt = new Node(val=elems[i]);
+        if (t == null) { h = nt; t = nt; }
+        else { t.next = nt; t = nt; }
+    }
+
+    return h;
+}
+
+pragma options "--bnd-inline-amnt=8";
+
+bit is_sorted(Node h, fun R) {
+    return h == null || h.next == null || R(h.val, h.next.val) && is_sorted(h.next, R);
+}
+
+int length(Node h) {
+    if (h == null) return 0;
+    else return 1 + length(h.next);
+}
+
+/*---------------------------------------------------------------------------------
+ * Reverse a linked list in-place.
+ */
+Node reverse(Node h) {
+
+
+
+}
+/*
+ *---------------------------------------------------------------------------------*/
+
+
+
+/*---------------------------------------------------------------------------------
+ * Bonus: synthesize iterative versions of is_sorted and length.
+ * Don't forget to add a harness...
+ */
+bit is_sorted_iter(Node h, fun R) {
+    bit i = ??;
+
+	/* a bunch of generators here */
+
+    return i;
+}
+
+int length_iter(Node h) {
+    int i = ??;
+
+	/* a bunch of generators here */
+
+    return i;
+}
+/*
+ *---------------------------------------------------------------------------------*/
+
+
+harness void main(int n, int[n] elems) {
+
+    assume n < 8;  /* <-- this is important to prevent unroll bound overflow */
+
+    Node h = mklist(n, elems);
+
+    assume is_sorted(h, (x,y) -> x < y);    /* Precondition */
+
+    h = reverse(h);
+
+    assert ???                              /* Postcondition */
+}
+

@@ -1,0 +1,88 @@
+
+struct At {
+  int x;
+  int y;
+}
+
+At SZ = new At(x=3,y=3);               //  +-----------+
+                                       //  |     X     |
+int[4][3] WALLS = { { 1, 1, 2, 1 },    //  |   +---+   +
+                    { 1, 0, 1, 1 },    //  |       |     >>
+                    { 1, 1, 1, 2 } };  //  |   +---+   +
+                                       //  |     O     |
+At THESEUS  = new At(x=1,y=2);         //  +-----------+
+At MINOTAUR = new At(x=1,y=0);
+At EXIT     = new At(x=2,y=1);
+
+
+int LEFT = 0;
+int RIGHT = 1;
+int UP = 2;
+int DOWN = 3;
+
+/**
+ * Assumes `from` and `to` are exactly one step apart
+ */
+bit can_move(At from, At to) {
+  bit cross_wall(int x0, int y0, int x1, int y1) {
+    return from.x + to.x == x0 + x1 && from.y + to.y == y0 + y1;
+  }
+
+  return (to.x >= 0 && to.y >= 0 && to.x < SZ.x && to.y < SZ.y)
+    && !exists(WALLS, (w) -> cross_wall(w[0], w[1], w[2], w[3])); 
+}
+
+bit exists<T>([int n], T[n] array, fun f) {
+  for (int i = 0; i < n; i++)
+    if (f(array[i])) return 1;
+  return 0;
+}
+
+
+/**
+ * Hint: write this function first.
+ *
+ * `dir` is expected to be one of `LEFT` / `RIGHT` / `UP` / `DOWN`.
+ * Change `pos` in-place, return 1 if move was successful;
+ * return 0 otherwise and leave `pos` unchanged.
+ */
+bit move(At pos, int dir) {
+
+}
+
+
+
+/* - some helper functions for `At` - */
+bit  eq(At a, At b)    { return a.x == b.x && a.y == b.y; }
+void set(At a, |At| b) { a.x = b.x; a.y = b.y; }
+At   copy(At a)        { return new At(x=a.x, y=a.y); }
+
+
+/* -----------------------------------------------------------------
+ *  This part is just here to print things nicely in C
+ */
+@Native("{ printf(\"Theseus@(%d,%d), Minotaur@(%d,%d)\\n\",
+             theseus->x, theseus->y, minotaur->x, minotaur->y); }")
+void print(At theseus, At minotaur) {
+}
+
+int print_dir(int i) { sep(DIRS[i]); return i; }
+
+/* Unicode points for arrows ← → ↑ ↓ */
+char[4][4] DIRS = { { 0xe2, 0x86, 0x90 }, { 0xe2, 0x86, 0x92 },
+                    { 0xe2, 0x86, 0x91 }, { 0xe2, 0x86, 0x93 } };
+
+@Native("{ printf(\"%s\\n\", s); }")
+void sep([int n], char[n] s) { }
+
+/* ----------------------------------------------------------------- */
+
+
+
+harness void escape() {
+  At theseus = copy(THESEUS);
+  At minotaur = copy(MINOTAUR);
+
+  /* now what? */
+}
+
