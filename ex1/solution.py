@@ -5,7 +5,7 @@ Your task:
 Implement type checking and type inference for simply-typed lambda calculus.
 """
 
-from SoftwareSynthesisAndAutomatedReasoning.syntax.lambda_typed import (
+from syntax.lambda_typed import (
     parse, TypedExpr, is_grounded_expr,
     Id,            # Represents a variable name in the lambda expression.
     Int,
@@ -47,7 +47,6 @@ TypeEnv = Dict[str, LambdaType]
 # ------------------------------------------------------------------------------------
 #                          UNIFICATION ENGINE (Core Type Logic)
 # ------------------------------------------------------------------------------------
-
 
 def occurs_in(tv: TypeVar, t: LambdaType) -> bool:
     """
@@ -132,8 +131,7 @@ def unify(t1: LambdaType, t2: LambdaType, subst: Substitution) -> None:
 #                        TYPE INFERENCE CORE - Expression Traversal
 # ------------------------------------------------------------------------------------
 
-
-def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
+def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> TypedExpr:
     """
     Recursively infers the type of a lambda expression ('expr') under the given environment ('env').
     During traversal, it builds up the substitution map ('subst') to resolve type variables.
@@ -145,21 +143,16 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
                 raise InsufficientAnnotationsError(f"Unbound variable: {name}")
             # Apply current substitutions to the type before returning it.
             # expr.type = apply_subst(env[name], subst)
-            # Adi: solve the "read only" error by creating a new instance of expr
-            #      this is generally a good practice in functional programming.
-            expr = TypedExpr(expr.expr, apply_subst(env[name], subst))
-            return expr.type
+            return TypedExpr(expr.expr, apply_subst(env[name], subst))
 
         case Int(_):
             # An integer literal always has type 'int'
             # expr.type = Primitive.INT
-            expr = TypedExpr(expr.expr, Primitive.INT)
-            return expr.type
+            return TypedExpr(expr.expr, Primitive.INT)
 
         case Bool(_):
             # expr.type = Primitive.BOOL
-            expr = TypedExpr(expr.expr, Primitive.BOOL)
-            return expr.type
+            return TypedExpr(expr.expr, Primitive.BOOL)
 
         case App(func, arg):
             # Infer type of function part
@@ -172,8 +165,7 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
             unify(tf, Arrow(ta, tr), subst)
             # Final result type is the resolved tr
             # expr.type = apply_subst(tr, subst)
-            expr = TypedExpr(expr.expr, apply_subst(tr, subst))
-            return expr.type
+            return TypedExpr(expr.expr, apply_subst(tr, subst))
 
         case Lambda(decl, body, _):
             # A lambda must always have an annotation on its parameter (i.e., \(x : type). body).
@@ -183,34 +175,50 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
             env2 = env.copy()
             env2[decl.var.name] = decl.type
             # Infer type of body in new environment
-            tb = infer(body, env2, subst)
-            # The lambda’s type is arg → result
+            typed_body = infer(body, env2, subst)
+            tb = typed_body.type
+            # The lambda’s type is arg -> result
             # expr.type = Arrow(apply_subst(decl.type, subst), tb)
-            expr = TypedExpr(expr.expr, Arrow(apply_subst(decl.type, subst), tb))
-            # Store return type in AST
-            expr.expr.ret = tb
-            return expr.type
+            # Apply substitutions to argument and return types
+            arg_type = apply_subst(decl.type, subst)
+            ret_type = apply_subst(tb, subst)
+            # Reconstruct Lambda AST with correct inner types
+            lambda_node = Lambda(
+                decl=VarDecl(decl.var, arg_type),
+                body=typed_body,
+                ret=ret_type
+            )
 
-        case Let(decl, defn, body):  # For example: let x = defn in body
+            # Return TypedExpr wrapping the Lambda node
+            return TypedExpr(lambda_node, Arrow(arg_type, ret_type))
+
+        case Let(decl, defn, body):
             # Infer type of the definition part
-            td = infer(defn, env, subst)
+            typed_defn = infer(defn, env, subst)
+            defn_type = typed_defn.type
+
             # If the declaration had a type, unify it with the inferred one
             if decl.type:
-                unify(td, decl.type, subst)
+                unify(defn_type, decl.type, subst)
                 final_decl_type = apply_subst(decl.type, subst)
             else:
-                final_decl_type = td
+                final_decl_type = defn_type
+
             # Extend environment with the new variable
             env2 = env.copy()
             env2[decl.var.name] = final_decl_type
-            # Infer body in the new environment
-            tb = infer(body, env2, subst)
-            # Result type is the type of the body
-            # expr.type = tb
-            expr = TypedExpr(expr.expr, tb)
-            # Store final type in AST node
-            expr.expr.decl.type = final_decl_type
-            return tb
+
+            typed_body = infer(body, env2, subst)
+            body_type = typed_body.type
+
+            # Construct final Let node with updated types
+            let_node = Let(
+                decl=VarDecl(decl.var, final_decl_type),
+                defn=typed_defn,
+                body=typed_body
+            )
+
+            return TypedExpr(let_node, body_type)
 
         case _:
             raise NotImplementedError(f"Unknown expression: {expr}")
@@ -218,7 +226,6 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
 # ------------------------------------------------------------------------------------
 #                         FINAL PASS - Apply Substitutions to AST
 # ------------------------------------------------------------------------------------
-
 
 def apply_subst_expr(expr: TypedExpr, subst: Substitution) -> TypedExpr:
     """
@@ -239,11 +246,14 @@ def apply_subst_expr(expr: TypedExpr, subst: Substitution) -> TypedExpr:
 
         case Lambda(decl, body, ret):
             # I am not sure I am using the syntax here correctly.
+            new_decl = VarDecl(decl.var, apply_subst(decl.type, subst))
+            new_body = apply_subst_expr(body, subst)
+            new_ret_type = apply_subst(ret, subst)
             return TypedExpr(
                 Lambda(
-                    VarDecl(decl.var, apply_subst(decl.type, subst)),   # Param type
-                    apply_subst_expr(body, subst),                      # Body
-                    apply_subst(ret, subst)                             # Return type
+                    decl=new_decl,
+                    body=new_body,
+                    ret=new_ret_type
                 ),
                 t
             )
@@ -265,7 +275,6 @@ def apply_subst_expr(expr: TypedExpr, subst: Substitution) -> TypedExpr:
 #                         ENTRY POINT - Public API Function
 # ------------------------------------------------------------------------------------
 
-
 def infer_types(expr: TypedExpr) -> TypedExpr:
     """
     Input: an expression with ungrounded types (containing TypeVar types).
@@ -279,10 +288,10 @@ def infer_types(expr: TypedExpr) -> TypedExpr:
     subst: Substitution = {}
 
     # Perform recursive inference to populate the substitution map
-    _ = infer(expr, env={}, subst=subst)
+    inferred_expr = infer(expr, env={}, subst=subst)
 
     # Apply all substitutions to the AST to fully resolve it
-    result: TypedExpr = apply_subst_expr(expr, subst)
+    result: TypedExpr = apply_subst_expr(inferred_expr, subst)
 
     # Ensure the result is fully typed (no free variables left)
     if not is_grounded_expr(result, require_fully_annotated=True):
