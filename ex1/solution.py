@@ -5,7 +5,7 @@ Your task:
 Implement type checking and type inference for simply-typed lambda calculus.
 """
 
-from syntax.lambda_typed import (
+from SoftwareSynthesisAndAutomatedReasoning.syntax.lambda_typed import (
     parse, TypedExpr, is_grounded_expr,
     Id,            # Represents a variable name in the lambda expression.
     Int,
@@ -47,6 +47,7 @@ TypeEnv = Dict[str, LambdaType]
 # ------------------------------------------------------------------------------------
 #                          UNIFICATION ENGINE (Core Type Logic)
 # ------------------------------------------------------------------------------------
+
 
 def occurs_in(tv: TypeVar, t: LambdaType) -> bool:
     """
@@ -131,6 +132,7 @@ def unify(t1: LambdaType, t2: LambdaType, subst: Substitution) -> None:
 #                        TYPE INFERENCE CORE - Expression Traversal
 # ------------------------------------------------------------------------------------
 
+
 def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
     """
     Recursively infers the type of a lambda expression ('expr') under the given environment ('env').
@@ -142,16 +144,21 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
             if name not in env:
                 raise InsufficientAnnotationsError(f"Unbound variable: {name}")
             # Apply current substitutions to the type before returning it.
-            expr.type = apply_subst(env[name], subst)
+            # expr.type = apply_subst(env[name], subst)
+            # Adi: solve the "read only" error by creating a new instance of expr
+            #      this is generally a good practice in functional programming.
+            expr = TypedExpr(expr.expr, apply_subst(env[name], subst))
             return expr.type
 
         case Int(_):
             # An integer literal always has type 'int'
-            expr.type = Primitive.INT
+            # expr.type = Primitive.INT
+            expr = TypedExpr(expr.expr, Primitive.INT)
             return expr.type
 
         case Bool(_):
-            expr.type = Primitive.BOOL
+            # expr.type = Primitive.BOOL
+            expr = TypedExpr(expr.expr, Primitive.BOOL)
             return expr.type
 
         case App(func, arg):
@@ -164,7 +171,8 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
             # Ensure the function's type matches: tf = ta → tr
             unify(tf, Arrow(ta, tr), subst)
             # Final result type is the resolved tr
-            expr.type = apply_subst(tr, subst)
+            # expr.type = apply_subst(tr, subst)
+            expr = TypedExpr(expr.expr, apply_subst(tr, subst))
             return expr.type
 
         case Lambda(decl, body, _):
@@ -177,7 +185,8 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
             # Infer type of body in new environment
             tb = infer(body, env2, subst)
             # The lambda’s type is arg → result
-            expr.type = Arrow(apply_subst(decl.type, subst), tb)
+            # expr.type = Arrow(apply_subst(decl.type, subst), tb)
+            expr = TypedExpr(expr.expr, Arrow(apply_subst(decl.type, subst), tb))
             # Store return type in AST
             expr.expr.ret = tb
             return expr.type
@@ -197,7 +206,8 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
             # Infer body in the new environment
             tb = infer(body, env2, subst)
             # Result type is the type of the body
-            expr.type = tb
+            # expr.type = tb
+            expr = TypedExpr(expr.expr, tb)
             # Store final type in AST node
             expr.expr.decl.type = final_decl_type
             return tb
@@ -208,6 +218,7 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> LambdaType:
 # ------------------------------------------------------------------------------------
 #                         FINAL PASS - Apply Substitutions to AST
 # ------------------------------------------------------------------------------------
+
 
 def apply_subst_expr(expr: TypedExpr, subst: Substitution) -> TypedExpr:
     """
@@ -253,6 +264,7 @@ def apply_subst_expr(expr: TypedExpr, subst: Substitution) -> TypedExpr:
 # ------------------------------------------------------------------------------------
 #                         ENTRY POINT - Public API Function
 # ------------------------------------------------------------------------------------
+
 
 def infer_types(expr: TypedExpr) -> TypedExpr:
     """
