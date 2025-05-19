@@ -109,11 +109,11 @@ def unify(t1: LambdaType, t2: LambdaType, subst: Substitution) -> None:
             unify(t2, t1, subst)
             return
 
-        case (Primitive(p1), Primitive(p2)) if p1 == p2:
+        case (p1, p2) if isinstance(p1, Primitive) and isinstance(p2, Primitive) and p1 == p2:
             # Both are the same primitive (e.g., int vs int) - fine.
             return
 
-        case (TypeName(n1), TypeName(n2)) if n1 == n2:
+        case (n1, n2) if isinstance(n1, TypeName) and isinstance(n2, TypeName) and n1.name == n2.name:
             # Both are the same named type (e.g., MyType vs MyType).
             return
 
@@ -161,8 +161,8 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> TypedExpr:
             ta = infer(arg, env, subst)
             # Introduce a fresh type variable for the result type of application
             tr = fresh_typevar()
-            # Ensure the function's type matches: tf = ta → tr
-            unify(tf, Arrow(ta, tr), subst)
+            # Ensure the function's type matches: tf = ta -> tr
+            unify(tf.type, Arrow(ta.type, tr), subst)
             # Final result type is the resolved tr
             # expr.type = apply_subst(tr, subst)
             return TypedExpr(expr.expr, apply_subst(tr, subst))
