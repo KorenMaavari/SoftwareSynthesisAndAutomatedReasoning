@@ -142,16 +142,13 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> TypedExpr:
             if name not in env:
                 raise InsufficientAnnotationsError(f"Unbound variable: {name}")
             # Apply current substitutions to the type before returning it.
-            # expr.type = apply_subst(env[name], subst)
             return TypedExpr(expr.expr, apply_subst(env[name], subst))
 
         case Int(_):
             # An integer literal always has type 'int'
-            # expr.type = Primitive.INT
             return TypedExpr(expr.expr, Primitive.INT)
 
-        case Bool(_):
-            # expr.type = Primitive.BOOL
+        case Bool.TRUE | Bool.FALSE:
             return TypedExpr(expr.expr, Primitive.BOOL)
 
         case App(func, arg):
@@ -181,7 +178,7 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> TypedExpr:
             typed_body = infer(body, env2, subst)
             tb = typed_body.type
             # The lambda’s type is arg -> result
-            # expr.type = Arrow(apply_subst(decl.type, subst), tb)
+
             # Apply substitutions to argument and return types
             arg_type = apply_subst(decl.type, subst)
             ret_type = apply_subst(tb, subst)
