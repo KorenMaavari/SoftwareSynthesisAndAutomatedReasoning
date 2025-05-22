@@ -165,7 +165,8 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> TypedExpr:
             unify(tf.type, Arrow(ta.type, tr), subst)
             # Final result type is the resolved tr
             # expr.type = apply_subst(tr, subst)
-            return TypedExpr(expr.expr, apply_subst(tr, subst))
+            appNode = App(tf, ta)
+            return TypedExpr(appNode, apply_subst(tr, subst))
 
         case Lambda(decl, body, _):
             # A lambda must always have an annotation on its parameter (i.e., \(x : type). body).
@@ -260,11 +261,9 @@ def apply_subst_expr(expr: TypedExpr, subst: Substitution) -> TypedExpr:
 
         case Let(decl, defn, body):
             return TypedExpr(
-                Let(
-                    VarDecl(decl.var, apply_subst(decl.type, subst)),
-                    apply_subst_expr(defn, subst),
-                    apply_subst_expr(body, subst)
-                ),
+                Let(VarDecl(decl.var, apply_subst(decl.type, subst)), 
+                    apply_subst_expr(defn, subst), 
+                    apply_subst_expr(body, subst)),
                 t
             )
 
@@ -296,6 +295,7 @@ def infer_types(expr: TypedExpr) -> TypedExpr:
     # Ensure the result is fully typed (no free variables left)
     if not is_grounded_expr(result, require_fully_annotated=True):
         raise InsufficientAnnotationsError("Output contains unspecified type variables")
+        # print(f"Output contains unspecified type variables")
 
     return result
 
