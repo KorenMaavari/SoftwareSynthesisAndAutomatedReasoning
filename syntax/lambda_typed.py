@@ -133,14 +133,16 @@ def is_grounded_expr(e: TypedExpr, require_fully_annotated: bool) -> bool:
                 is_grounded_expr(defn, require_fully_annotated)
                 and is_grounded_expr(body, require_fully_annotated)
                 and is_grounded_type(decl.type, require_fully_annotated)
-            )
+            )            
         case Lambda(decl, body):
-            return is_grounded_expr(body, require_fully_annotated) and is_grounded_type(
-                decl.type, require_fully_annotated
+            return  (
+                is_grounded_expr(body, require_fully_annotated)
+                and is_grounded_type(decl.type, require_fully_annotated)
             )
         case App(func, arg):
-            return is_grounded_expr(func, require_fully_annotated) and is_grounded_expr(
-                arg, require_fully_annotated
+            return (
+                is_grounded_expr(func, require_fully_annotated) 
+                and is_grounded_expr(arg, require_fully_annotated)
             )
         case _:
             raise ValueError(f"Unknown expression: {e.expr!r}")
