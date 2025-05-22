@@ -164,7 +164,9 @@ def infer(expr: TypedExpr, env: TypeEnv, subst: Substitution) -> TypedExpr:
             # Ensure the function's type matches: tf = ta -> tr
             unify(tf.type, Arrow(ta.type, tr), subst)
             # Final result type is the resolved tr
-            # expr.type = apply_subst(tr, subst)
+            
+            # create a new appNode with the inferred results
+            # and return a new typedExpression with the new appNode and the calculated type
             appNode = App(tf, ta)
             return TypedExpr(appNode, apply_subst(tr, subst))
 
