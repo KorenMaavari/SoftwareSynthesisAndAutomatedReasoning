@@ -1,5 +1,6 @@
 Require Import Arith.Arith.
 Import Nat.
+Require Import Lia.
 
 
 
@@ -26,3 +27,19 @@ Inductive euclid : nat -> nat -> nat -> Prop :=
 Search "+" "-".   (* remember to use Search to find lemmas *)
 
 Theorem euclid_gcd : forall a b z, euclid a b z -> gcd a b z.
+Proof.
+
+  intros a b z H.
+  induction H.
+  - (* stop case: euclid z z z *)
+    apply base.
+    - (* step_a' case: a > b *)
+    replace a with ((a - b) + b) by lia.
+    apply step_a.
+    apply IHeuclid.
+      - (* step_b' case: a < b *)
+    replace b with (a + (b - a)) by lia.
+    apply step_b.
+    apply IHeuclid.
+Qed.
+  
