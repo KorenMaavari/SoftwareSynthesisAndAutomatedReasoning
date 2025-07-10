@@ -30,7 +30,7 @@ OP = {
     "+": operator.add,
     "-": operator.sub,
     "*": operator.mul,
-    "/": operator.floordiv,
+    "/": lambda a, b: a / b,
     "!=": operator.ne,
     ">": operator.gt,
     "<": operator.lt,
