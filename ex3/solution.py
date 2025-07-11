@@ -30,7 +30,7 @@ OP = {
     "+": operator.add,
     "-": operator.sub,
     "*": operator.mul,
-    "/": lambda a, b: a / b,
+    "/": lambda a, b: a / b,  # Koren: May need to define the division operation by a predefined operator that is in the z3 library or in another Python library
     "!=": operator.ne,
     ">": operator.gt,
     "<": operator.lt,
@@ -90,7 +90,7 @@ def wp(stmt: Stmt, Q: Invariant, env: Env) -> Formula:
                 z3.Implies(z3.Not(cond_eval), wp(else_branch, Q, env)),
             )
 
-        case While(cond, body):
+        case While(cond, body):  # Koren: Maybe should deal with the case of a while loop in a different way
             # Use loop invariant from environment
             linv: Invariant = env["linv"]
             cond_eval = expr_eval(cond, env)
@@ -159,16 +159,16 @@ def find_solution(
 
     vars = collect_vars(stmt)
     env: Env = mk_env(vars)
-    env["linv"] = linv  # Add loop invariant to environment
+    env["linv"] = linv  # Add loop invariant to environment  # Koren: might need to add something to the env or maybe even change the way the env is used in general
 
     # Construct the VC: P ∧ ¬wp(stmt, Q)
     # But also include initiation separately:
     initiation = z3.Implies(P(env), linv(env))
     body_vc = z3.And(P(env), z3.Not(wp(stmt, Q, env)))
-    vc = z3.And(initiation, body_vc)
+    vc = z3.And(initiation, body_vc)  # Koren: Maybe should define vc in a different way: maybe with other parameters, maybe with another logic, ...
 
     solver = z3.Solver()
-    solver.add(vc)
+    solver.add(vc)  # Koren: Perhaps the solver itself needs to be changed in terms of logic
     return solver
 
 
